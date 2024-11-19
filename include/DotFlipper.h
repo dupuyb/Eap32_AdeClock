@@ -59,6 +59,7 @@ class DotFlipper : public Adafruit_GFX {
         void clear(uint8_t color);
         void invert(void);
         void displayText(String text);
+        void displaySmallText(String text);
         uint8_t *getDisplayBuffer(void);
         void flushToFlipdot(void);
 

@@ -44,6 +44,17 @@ void DotFlipper::invert() {
     }
 }
 
+void DotFlipper::displaySmallText(String text) {
+    clear(0x00);
+    GFXcanvas1 canvas(84, 7); // pixel canvas
+    canvas.setFont(&TomThumb);
+    canvas.setRotation(2);
+    canvas.setCursor(0,6);
+    canvas.print(text);
+    drawBitmap(0, 0, canvas.getBuffer(), 84, 7, 0xff, 0x00); // Copy to screen
+    flushToFlipdot();
+}
+
 void DotFlipper::displayText(String text) {
     clear(0x00);
     GFXcanvas1 canvas(84, 7); // pixel canvas

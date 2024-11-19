@@ -67,7 +67,7 @@ int utcRemote = 3600;
 boolean toggleText = false;
 char text[20];
 boolean toggleCount = false;
-char textDot[20];
+char textDot[25];
 
 // Json Variable to Hold Sensor Readings
 void webSocketSend(uint8_t num) {
@@ -83,14 +83,19 @@ void webSocketSend(uint8_t num) {
 }
 
 void sendToDotDisplay() { 
-  if(toggleClock)
-    strlcpy(textDot, getDate(0).c_str(), 20);
-  if (toggleText)
-    strlcpy(textDot, text, 20);
-  display.displayText(textDot);
+  if(toggleClock) {
+    strlcpy(textDot, getDate(0).c_str(), 25);
+    display.displayText(textDot);
+  }
+  if (toggleText) {
+    strlcpy(textDot, text, 25);
+    display.displaySmallText(textDot);
+  }
   if (numero!=-1)
     webSocketSend(numero);
+#ifdef DEBUG_MAIN
   Serial.printf("sendToDotDisplay numero:%d\n\r", numero);
+#endif
 }
 
 void decodeJson(uint8_t num, WStype_t type, uint8_t * payload, size_t length)  {
@@ -115,7 +120,9 @@ void decodeJson(uint8_t num, WStype_t type, uint8_t * payload, size_t length)  {
     toggleText = false,
     strlcpy(text, "", 20);
   }
+#ifdef DEBUG_MAIN
   Serial.printf("decodeJson toggleClock=%d utc=%d toggleText=%d text=%s\n",toggleClock, utcRemote, toggleText, text);
+#endif
 }
 
 // Receved value from Browser
@@ -162,14 +169,20 @@ void configModeCallback (WiFiManager *myWiFiManager) {
   #ifdef DEBUG_MAIN
     Serial.printf("Mode Access Point is running \n\r");
   #endif
+  snprintf(textDot, 25, "AP:%s",frame.config.HostName);
+  display.displaySmallText(textDot);
 }
 
 // setup -------------------------------------------------------------------------
 void setup() {
-#ifdef DEBUG_MAIN
+
   Serial.begin(115200);
+#ifdef DEBUG_MAIN
   Serial.printf("Start setup Ver:%s\n\r",VERSION);
 #endif
+
+  // init the display
+  display.begin();
 
   // Set pin mode  I/O Directions
   pinMode(EspLedBlue, OUTPUT);     // Led is BLUE at statup
@@ -190,9 +203,8 @@ void setup() {
   // Start time
   getLocalTime(&timeinfo);
 
-  // init the display
-  display.begin();
-  display.displayText(WiFi.localIP().toString().c_str());
+  // Ip adresse
+  display.displaySmallText(WiFi.localIP().toString().c_str());
   
   // Wait little bit to get time delay
   delay(2000);
@@ -207,7 +219,7 @@ void setup() {
 
 // Main loop -----------------------------------------------------------------
 void loop() {
-  #ifdef DEBUG_MAIN
+
   while (Serial.available() > 0) {
     uint8_t c = (uint8_t)Serial.read();
     if (c != 13 && c != 10 ) {
@@ -218,7 +230,6 @@ void loop() {
       else if (cmd=='v') { Serial.printf("Stop serial: %s \n\r",VERSION); cmd=' '; }
     }
   }
-  #endif
 
   // Call Html_frame loop
   frame.loop();
