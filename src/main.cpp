@@ -6,10 +6,14 @@ FrameWeb frame;
 #include <WebSocketsServer.h>
 #include <HTTPClient.h>
 #include <time.h>
+#include "DotFlipper.h"
 // Reset Reason 
 #include <rom/rtc.h>
 
+DotFlipper display = DotFlipper();
+
 const char VERSION[] ="0.0.1";
+const String WeekDays[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 // Debug macro 
 #define DEBUG_MAIN
 
@@ -34,14 +38,13 @@ String getTime() {
   return String(temp);
 }
 
-
 // Date as europeen format
 String getDate(int sh = -1){
   static char temp[20];
   switch (sh) {
   case 0: 
     // snprintf(temp, 20, "%02d/%02d/%04d", timeinfo.tm_mday, (timeinfo.tm_mon+1), (1900+timeinfo.tm_year) );
-    snprintf(temp, 20, "%a %d   %H:%M", timeinfo.tm_mday );
+    snprintf(temp, 20, "%s %d   %02d:%02d", WeekDays[timeinfo.tm_wday].c_str(),  timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min);
     break;
   case 1:
     snprintf(temp, 20, "%02d/%02d/%02d %02d:%02d", timeinfo.tm_mday, (timeinfo.tm_mon+1), (timeinfo.tm_year-100),  timeinfo.tm_hour,timeinfo.tm_min );
@@ -84,6 +87,7 @@ void sendToDotDisplay() {
     strlcpy(textDot, getDate(0).c_str(), 20);
   if (toggleText)
     strlcpy(textDot, text, 20);
+  display.displayText(textDot);
   if (numero!=-1)
     webSocketSend(numero);
   Serial.printf("sendToDotDisplay numero:%d\n\r", numero);
@@ -188,7 +192,7 @@ void setup() {
 
   // init the display
   display.begin();
-  displayText("Init...");
+  display.displayText(WiFi.localIP().toString().c_str());
   
   // Wait little bit to get time delay
   delay(2000);
