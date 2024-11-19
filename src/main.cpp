@@ -19,7 +19,7 @@ int8_t wifiLost = 0;
 
 // Time facilities
 const long gmtOffset_sec     = 3600;
-const int daylightOffset_sec = 3600; // heure d'ete 3600
+int daylightOffset_sec = 3600; // heure d'ete 3600
 struct tm timeinfo;            // time struct
 const char* ntpServer        = "pool.ntp.org";
 String rebootTime;
@@ -40,7 +40,8 @@ String getDate(int sh = -1){
   static char temp[20];
   switch (sh) {
   case 0: 
-    snprintf(temp, 20, "%02d/%02d/%04d", timeinfo.tm_mday, (timeinfo.tm_mon+1), (1900+timeinfo.tm_year) );
+    // snprintf(temp, 20, "%02d/%02d/%04d", timeinfo.tm_mday, (timeinfo.tm_mon+1), (1900+timeinfo.tm_year) );
+    snprintf(temp, 20, "%a %d   %H:%M", timeinfo.tm_mday );
     break;
   case 1:
     snprintf(temp, 20, "%02d/%02d/%02d %02d:%02d", timeinfo.tm_mday, (timeinfo.tm_mon+1), (timeinfo.tm_year-100),  timeinfo.tm_hour,timeinfo.tm_min );
@@ -58,7 +59,8 @@ void saveConfigCallback() {}
 // -------------------- WebSockwt functions see Data/websocket.html/js ------------------------
 int numero = -1;
 boolean toggleClock = true;
-int utc = 3600;
+int utcRemote = 3600;
+
 boolean toggleText = false;
 char text[20];
 boolean toggleCount = false;
@@ -69,7 +71,7 @@ void webSocketSend(uint8_t num) {
   String jsonString;
   JsonDocument readings;
   readings["toggleClock"] = toggleClock;
-  readings["Utc"] = String(utc);
+  readings["Utc"] = String(utcRemote);
   readings["toggleText"] = toggleText;
   readings["text"] = String(text);
   readings["textDot"] = String(textDot);
@@ -79,7 +81,7 @@ void webSocketSend(uint8_t num) {
 
 void sendToDotDisplay() { 
   if(toggleClock)
-    strlcpy(textDot, getDate(1).c_str(), 20);
+    strlcpy(textDot, getDate(0).c_str(), 20);
   if (toggleText)
     strlcpy(textDot, text, 20);
   if (numero!=-1)
@@ -102,14 +104,14 @@ void decodeJson(uint8_t num, WStype_t type, uint8_t * payload, size_t length)  {
       return;
   }
   toggleClock = rootcfg["toggleClock"];
-  utc = rootcfg["Utc"];
+  utcRemote = rootcfg["Utc"];
   toggleText = rootcfg["toggleText"];
   strlcpy(text, rootcfg["text"], 20);
   if (toggleClock && toggleText) { 
     toggleText = false,
     strlcpy(text, "", 20);
   }
-  Serial.printf("decodeJson toggleClock=%d utc=%d toggleText=%d text=%s\n",toggleClock, utc, toggleText, text);
+  Serial.printf("decodeJson toggleClock=%d utc=%d toggleText=%d text=%s\n",toggleClock, utcRemote, toggleText, text);
 }
 
 // Receved value from Browser
@@ -217,6 +219,11 @@ void loop() {
     previousMillis = millis();
 
     // Update led and time
+    if (utcRemote != daylightOffset_sec){
+      daylightOffset_sec = utcRemote;
+      configTime(gmtOffset_sec, daylightOffset_sec, ntpServer); //init 
+    }
+
     getLocalTime(&timeinfo);
     digitalWrite(EspLedBlue, !digitalRead(EspLedBlue));
     
