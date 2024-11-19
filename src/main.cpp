@@ -185,6 +185,11 @@ void setup() {
 
   // Start time
   getLocalTime(&timeinfo);
+
+  // init the display
+  display.begin();
+  displayText("Init...");
+  
   // Wait little bit to get time delay
   delay(2000);
 
