@@ -89,7 +89,7 @@ void sendToDotDisplay() {
   }
   if (toggleText) {
     strlcpy(textDot, text, 25);
-    display.displaySmallText(textDot);
+    display.displayText(textDot);
   }
   if (numero!=-1)
     webSocketSend(numero);
@@ -203,11 +203,15 @@ void setup() {
   // Start time
   getLocalTime(&timeinfo);
 
-  // Ip adresse
-  display.displaySmallText(WiFi.localIP().toString().c_str());
-  
-  // Wait little bit to get time delay
-  delay(2000);
+  for (int i=0; i<10; i++) {
+
+    // Ip adresse
+    snprintf(textDot, 25, "%s Starting...", WiFi.localIP().toString().c_str()),
+    display.displaySmallText(textDot);
+
+    // Wait little bit dot display init.
+    delay(5000);
+  }
 
   // reboot time
   rebootTime = getDate(1);
