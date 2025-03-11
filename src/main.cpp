@@ -25,7 +25,7 @@ int8_t wifiLost = 0;
 const long gmtOffset_sec     = 3600;
 int daylightOffset_sec = 3600; // heure d'ete 3600
 struct tm timeinfo;            // time struct
-const char* ntpServer        = "pool.ntp.org";
+const char* ntpServer        = "fr.pool.ntp.org";
 String rebootTime;
 // Internal led
 #define EspLedBlue 2
@@ -44,7 +44,7 @@ String getDate(int sh = -1){
   switch (sh) {
   case 0: 
     // snprintf(temp, 20, "%02d/%02d/%04d", timeinfo.tm_mday, (timeinfo.tm_mon+1), (1900+timeinfo.tm_year) );
-    snprintf(temp, 20, "%s %d   %02d:%02d", WeekDays[timeinfo.tm_wday].c_str(),  timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min);
+    snprintf(temp, 20, "%02d:%02d   %s %d", timeinfo.tm_hour, timeinfo.tm_min, WeekDays[timeinfo.tm_wday].c_str(),  timeinfo.tm_mday);
     break;
   case 1:
     snprintf(temp, 20, "%02d/%02d/%02d %02d:%02d", timeinfo.tm_mday, (timeinfo.tm_mon+1), (timeinfo.tm_year-100),  timeinfo.tm_hour,timeinfo.tm_min );
@@ -198,6 +198,9 @@ void setup() {
 
   // Init time / Summer time 3600=Summer 0=Winter
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer); //init and get the time
+  setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+  tzset();
+
   wifiLost = 0;
 
   // Start time
@@ -246,6 +249,8 @@ void loop() {
     if (utcRemote != daylightOffset_sec){
       daylightOffset_sec = utcRemote;
       configTime(gmtOffset_sec, daylightOffset_sec, ntpServer); //init 
+      setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+      tzset();
     }
 
     getLocalTime(&timeinfo);
@@ -280,6 +285,8 @@ void loop() {
     boolean newMinute = ( (timeinfo.tm_sec == 00));
     if (newMinute ) {
       sendToDotDisplay();
+      if (timeinfo.tm_min == 00)
+        display.invert();
     }
     // ....
  
